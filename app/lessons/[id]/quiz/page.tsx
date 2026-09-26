@@ -10,6 +10,8 @@ import Link from 'next/link';
 
 interface Question {
   word: { id: string; japanese: string; vietnamese: string };
+  type: 'ja-to-vi' | 'vi-to-ja';
+  correctAnswer: string;
   options: string[];
 }
 
@@ -31,13 +33,25 @@ export default function QuizPage() {
   useEffect(() => {
     if (words.length > 0) {
       const generatedQuestions = words.map((word) => {
+        // randomly choose question type
+        const type = Math.random() > 0.5 ? 'ja-to-vi' : 'vi-to-ja';
+
         // get up to 3 distractors
         const otherWords = words.filter(w => w.id !== word.id);
         const shuffledOthers = [...otherWords].sort(() => 0.5 - Math.random());
-        const distractors = shuffledOthers.slice(0, 3).map(w => w.vietnamese);
         
-        const options = [word.vietnamese, ...distractors].sort(() => 0.5 - Math.random());
-        return { word, options };
+        let distractors;
+        let correctAnswer;
+        if (type === 'ja-to-vi') {
+          distractors = shuffledOthers.slice(0, 3).map(w => w.vietnamese);
+          correctAnswer = word.vietnamese;
+        } else {
+          distractors = shuffledOthers.slice(0, 3).map(w => w.japanese);
+          correctAnswer = word.japanese;
+        }
+        
+        const options = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
+        return { word, type, correctAnswer, options };
       });
       // shuffle questions
       setQuestions(generatedQuestions.sort(() => 0.5 - Math.random()));
@@ -49,7 +63,7 @@ export default function QuizPage() {
     
     setSelectedOption(option);
     
-    const isCorrect = option === questions[currentIndex].word.vietnamese;
+    const isCorrect = option === questions[currentIndex].correctAnswer;
     if (isCorrect) {
       setScore(prev => prev + 1);
     }
@@ -155,17 +169,17 @@ export default function QuizPage() {
 
       <Card className="shadow-lg border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-12 flex items-center justify-center min-h-[250px]">
-          <div className="text-6xl md:text-7xl font-bold text-slate-800 dark:text-slate-100 text-center">
-            {currentQ.word.japanese}
+          <div className={`font-bold text-slate-800 dark:text-slate-100 text-center ${currentQ.type === 'ja-to-vi' ? 'text-6xl md:text-7xl' : 'text-4xl md:text-5xl'}`}>
+            {currentQ.type === 'ja-to-vi' ? currentQ.word.japanese : currentQ.word.vietnamese}
           </div>
         </div>
         <CardContent className="p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {currentQ.options.map((option, idx) => {
-              const isCorrect = option === currentQ.word.vietnamese;
+              const isCorrect = option === currentQ.correctAnswer;
               const isSelected = selectedOption === option;
               
-              let btnClass = "h-16 text-lg font-medium justify-start px-6 border-2 transition-all cursor-pointer ";
+              let btnClass = "h-auto min-h-16 py-4 text-lg font-medium justify-start px-6 border-2 transition-all cursor-pointer whitespace-normal text-left ";
               
               if (selectedOption !== null) {
                 if (isCorrect) {
@@ -187,10 +201,10 @@ export default function QuizPage() {
                   onClick={() => handleOptionClick(option)}
                   disabled={selectedOption !== null}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <span>{option}</span>
-                    {selectedOption !== null && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />}
-                    {selectedOption !== null && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
+                  <div className="flex items-center justify-between w-full gap-3">
+                    <span className="text-left whitespace-normal break-words flex-1 leading-relaxed">{option}</span>
+                    {selectedOption !== null && isCorrect && <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 shrink-0" />}
+                    {selectedOption !== null && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-red-600 dark:text-red-400 shrink-0" />}
                   </div>
                 </Button>
               );

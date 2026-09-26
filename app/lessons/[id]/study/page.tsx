@@ -63,14 +63,14 @@ export default function StudyFlashcardsPage() {
   const handleNext = () => {
     if (currentIndex < words.length - 1) {
       setIsFlipped(false);
-      setTimeout(() => setCurrentIndex((prev) => prev + 1), 150); // slight delay for flip reset
+      setCurrentIndex((prev) => prev + 1);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setIsFlipped(false);
-      setTimeout(() => setCurrentIndex((prev) => prev - 1), 150);
+      setCurrentIndex((prev) => prev - 1);
     }
   };
 
@@ -95,6 +95,7 @@ export default function StudyFlashcardsPage() {
 
       <div className="relative w-full h-[400px] [perspective:1000px]">
         <div 
+          key={currentIndex}
           className={`w-full h-full relative transition-transform duration-700 [transform-style:preserve-3d] cursor-pointer shadow-xl rounded-2xl ${
             isFlipped ? '[transform:rotateY(180deg)]' : ''
           }`}

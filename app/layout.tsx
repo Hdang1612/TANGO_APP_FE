@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Inter } from "next/font/google";
 import Link from "next/link";
 import { BookA } from "lucide-react";
 import "./globals.css";
 
-const outfit = Outfit({
-  subsets: ["latin"],
+const inter = Inter({
+  subsets: ["latin", "vietnamese"],
 });
 
 
@@ -24,7 +24,7 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased"
     >
-      <body className={`${outfit.className} min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50`}>
+      <body className={`${inter.className} min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50`}>
         <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur dark:bg-slate-950/80">
           <div className="container mx-auto flex h-16 items-center px-4">
             <Link href="/" className="flex items-center gap-2 font-black text-2xl uppercase tracking-widest text-slate-900 dark:text-white hover:opacity-80 transition-opacity cursor-pointer">
