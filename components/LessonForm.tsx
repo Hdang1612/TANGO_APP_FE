@@ -13,7 +13,7 @@ import { Lesson } from '@/types';
 
 export const lessonSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  description: z.string().default(''),
+  description: z.string().optional(),
   vocabularies: z
     .array(
       z.object({

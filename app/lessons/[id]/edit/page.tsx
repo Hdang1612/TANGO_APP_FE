@@ -26,7 +26,7 @@ export default function EditLessonPage() {
   const onSubmit = (data: LessonFormValues) => {
     updateLesson(id, {
       title: data.title,
-      description: data.description,
+      description: data.description || '',
       vocabularies: data.vocabularies.map((v) => ({
         id: v.id || crypto.randomUUID(),
         japanese: v.japanese,

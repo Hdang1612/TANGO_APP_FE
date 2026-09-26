@@ -13,7 +13,7 @@ export default function CreateLessonPage() {
     const newLesson: Lesson = {
       id: crypto.randomUUID(),
       title: data.title,
-      description: data.description,
+      description: data.description || '',
       createdAt: new Date().toISOString(),
       vocabularies: data.vocabularies.map((v) => ({
         id: crypto.randomUUID(),

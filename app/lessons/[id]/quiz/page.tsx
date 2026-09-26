@@ -34,7 +34,7 @@ export default function QuizPage() {
     if (words.length > 0) {
       const generatedQuestions = words.map((word) => {
         // randomly choose question type
-        const type = Math.random() > 0.5 ? 'ja-to-vi' : 'vi-to-ja';
+        const type: 'ja-to-vi' | 'vi-to-ja' = Math.random() > 0.5 ? 'ja-to-vi' : 'vi-to-ja';
 
         // get up to 3 distractors
         const otherWords = words.filter(w => w.id !== word.id);
