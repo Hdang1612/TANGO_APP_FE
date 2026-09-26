@@ -11,7 +11,7 @@ interface AppState {
   deleteLesson: (id: string) => Promise<void>;
 }
 
-const API_URL = "http://localhost:3001/lessons";
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/lessons`;
 
 export const useStore = create<AppState>((set, get) => ({
   lessons: [],
