@@ -1,16 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useStore } from '@/store/useStore';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BookOpen, Layers, Edit2, Trash2, PlusCircle, Presentation } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useStore } from "@/store/useStore";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  BookOpen,
+  Layers,
+  Edit2,
+  Trash2,
+  PlusCircle,
+  Presentation,
+  Loader2,
+} from "lucide-react";
 
 export default function Home() {
-  const { lessons, deleteLesson } = useStore();
+  const { lessons, deleteLesson, fetchLessons, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchLessons();
+  }, [fetchLessons]);
 
   const confirmDelete = () => {
     if (lessonToDelete) {
@@ -36,11 +62,20 @@ export default function Home() {
         </Link>
       </div>
 
-      {lessons.length === 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <Loader2 className="w-10 h-10 animate-spin mb-4 text-blue-500" />
+          <p>Loading your lessons from server...</p>
+        </div>
+      ) : lessons.length === 0 ? (
         <div className="text-center py-20 bg-slate-100 rounded-xl border border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-800">
           <BookOpen className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">No lessons yet</h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">Create your first vocabulary lesson to get started.</p>
+          <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">
+            No lessons yet
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            Create your first vocabulary lesson to get started.
+          </p>
           <Link href="/lessons/create">
             <Button variant="outline">Create Lesson</Button>
           </Link>
@@ -48,18 +83,27 @@ export default function Home() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {lessons.map((lesson) => (
-            <Card key={lesson.id} className="group hover:shadow-xl transition-all duration-300 border-slate-200 hover:border-blue-200 dark:border-slate-800 dark:hover:border-blue-900 bg-white dark:bg-slate-900 overflow-hidden">
+            <Card
+              key={lesson.id}
+              className="group hover:shadow-xl transition-all duration-300 border-slate-200 hover:border-blue-200 dark:border-slate-800 dark:hover:border-blue-900 bg-white dark:bg-slate-900 overflow-hidden"
+            >
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-xl line-clamp-1">{lesson.title}</CardTitle>
+                    <CardTitle className="text-xl line-clamp-1">
+                      {lesson.title}
+                    </CardTitle>
                     <CardDescription className="line-clamp-2 mt-1 h-10">
                       {lesson.description}
                     </CardDescription>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Link href={`/lessons/${lesson.id}/edit`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -77,18 +121,25 @@ export default function Home() {
               <CardContent className="pb-4">
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-medium">
                   <Layers className="w-4 h-4 text-slate-400" />
-                  {lesson.vocabularies.length} {lesson.vocabularies.length === 1 ? 'word' : 'words'}
+                  {lesson.vocabularies?.length || 0}{" "}
+                  {(lesson.vocabularies?.length || 0) === 1 ? "word" : "words"}
                 </div>
               </CardContent>
               <CardFooter className="pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
                 <Link href={`/lessons/${lesson.id}/study`} className="flex-1">
-                  <Button variant="default" className="w-full bg-slate-900 hover:bg-slate-800 text-white gap-2">
+                  <Button
+                    variant="default"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white gap-2"
+                  >
                     <Presentation className="w-4 h-4" />
                     Flashcards
                   </Button>
                 </Link>
                 <Link href={`/lessons/${lesson.id}/quiz`} className="flex-1">
-                  <Button variant="outline" className="w-full gap-2 border-slate-200 hover:bg-slate-50 hover:text-blue-700">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 border-slate-200 hover:bg-slate-50 hover:text-blue-700"
+                  >
                     <BookOpen className="w-4 h-4" />
                     Quiz
                   </Button>
@@ -99,19 +150,27 @@ export default function Home() {
         </div>
       )}
 
-      <Dialog open={!!lessonToDelete} onOpenChange={(open) => !open && setLessonToDelete(null)}>
+      <Dialog
+        open={!!lessonToDelete}
+        onOpenChange={(open) => !open && setLessonToDelete(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the lesson and remove its vocabulary from your device.
+              This action cannot be undone. This will permanently delete the
+              lesson and remove its vocabulary from your device.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setLessonToDelete(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" onClick={confirmDelete}>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmDelete}
+            >
               Delete Lesson
             </Button>
           </DialogFooter>

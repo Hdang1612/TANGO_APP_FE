@@ -1,53 +1,89 @@
-import { create } from 'zustand';
-import { Lesson, Vocabulary } from '@/types';
+import { create } from "zustand";
+import { Lesson, Vocabulary } from "@/types";
 
 interface AppState {
   lessons: Lesson[];
-  addLesson: (lesson: Lesson) => void;
-  updateLesson: (id: string, lesson: Partial<Lesson>) => void;
-  deleteLesson: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  fetchLessons: () => Promise<void>;
+  addLesson: (lesson: Lesson) => Promise<void>;
+  updateLesson: (id: string, lesson: Partial<Lesson>) => Promise<void>;
+  deleteLesson: (id: string) => Promise<void>;
 }
 
-const initialLessons: Lesson[] = [
-  {
-    id: '1',
-    title: 'Greeting Basics',
-    description: 'Learn how to greet people in Japanese.',
-    createdAt: new Date().toISOString(),
-    vocabularies: [
-      { id: '1-1', japanese: 'こんにちは', vietnamese: 'Xin chào (buổi chiều)' },
-      { id: '1-2', japanese: 'おはようございます', vietnamese: 'Chào buổi sáng' },
-      { id: '1-3', japanese: 'こんばんは', vietnamese: 'Chào buổi tối' },
-      { id: '1-4', japanese: 'ありがとう', vietnamese: 'Cảm ơn' },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Food and Drinks',
-    description: 'Essential vocabulary for eating out.',
-    createdAt: new Date().toISOString(),
-    vocabularies: [
-      { id: '2-1', japanese: '水', vietnamese: 'Nước' },
-      { id: '2-2', japanese: 'ご飯', vietnamese: 'Cơm' },
-      { id: '2-3', japanese: '肉', vietnamese: 'Thịt' },
-      { id: '2-4', japanese: '魚', vietnamese: 'Cá' },
-      { id: '2-5', japanese: '野菜', vietnamese: 'Rau' },
-    ],
-  }
-];
+const API_URL = "http://localhost:3001/lessons";
 
-export const useStore = create<AppState>((set) => ({
-  lessons: initialLessons,
-  addLesson: (lesson) =>
-    set((state) => ({ lessons: [...state.lessons, lesson] })),
-  updateLesson: (id, updatedFields) =>
-    set((state) => ({
-      lessons: state.lessons.map((lesson) =>
-        lesson.id === id ? { ...lesson, ...updatedFields } : lesson
-      ),
-    })),
-  deleteLesson: (id) =>
-    set((state) => ({
-      lessons: state.lessons.filter((lesson) => lesson.id !== id),
-    })),
+export const useStore = create<AppState>((set, get) => ({
+  lessons: [],
+  isLoading: false,
+  error: null,
+
+  fetchLessons: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error("Failed to fetch lessons");
+      const data = await response.json();
+      set({ lessons: data, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  addLesson: async (lesson) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: lesson.title,
+          description: lesson.description,
+          vocabularies: lesson.vocabularies.map((v) => ({
+            japanese: v.japanese,
+            vietnamese: v.vietnamese,
+          })),
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to create lesson");
+      const newLesson = await response.json();
+      set((state) => ({ lessons: [...state.lessons, newLesson] }));
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  updateLesson: async (id, updatedFields) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedFields),
+      });
+      if (!response.ok) throw new Error("Failed to update lesson");
+      const updatedLesson = await response.json();
+      set((state) => ({
+        lessons: state.lessons.map((lesson) =>
+          lesson.id === id ? updatedLesson : lesson,
+        ),
+      }));
+    } catch (error: any) {
+      console.error(error);
+      throw error;
+    }
+  },
+
+  deleteLesson: async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete lesson");
+      set((state) => ({
+        lessons: state.lessons.filter((lesson) => lesson.id !== id),
+      }));
+    } catch (error: any) {
+      console.error(error);
+    }
+  },
 }));
