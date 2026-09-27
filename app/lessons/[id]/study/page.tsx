@@ -101,12 +101,17 @@ export default function StudyFlashcardsPage() {
           }`}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          {/* Front Face (Japanese) */}
+          {/* Front Face (Japanese & Hán Việt) */}
           <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center p-8 hover:border-blue-300 transition-colors">
-            <span className="text-slate-400 text-sm font-medium tracking-widest uppercase mb-8">Japanese</span>
-            <div className="text-6xl md:text-8xl font-bold text-slate-800 dark:text-slate-100 text-center">
+            <span className="text-slate-400 text-sm font-medium tracking-widest uppercase mb-4">Japanese</span>
+            <div className="text-6xl md:text-8xl font-bold text-slate-800 dark:text-slate-100 text-center mb-2">
               {currentWord.japanese}
             </div>
+            {currentWord.hanViet && (
+              <div className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 mt-2 font-medium tracking-wide">
+                [{currentWord.hanViet}]
+              </div>
+            )}
             <div className="absolute bottom-6 text-slate-400 flex items-center gap-2 text-sm">
               <RotateCw className="w-4 h-4" />
               Click or press Space to flip

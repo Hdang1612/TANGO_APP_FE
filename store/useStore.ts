@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Lesson, Vocabulary } from "@/types";
+import { toast } from "sonner";
 
 interface AppState {
   lessons: Lesson[];
@@ -27,6 +28,7 @@ export const useStore = create<AppState>((set, get) => ({
       set({ lessons: data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      toast.error(error.message || "Failed to fetch lessons");
     }
   },
 
@@ -41,14 +43,20 @@ export const useStore = create<AppState>((set, get) => ({
           vocabularies: lesson.vocabularies.map((v) => ({
             japanese: v.japanese,
             vietnamese: v.vietnamese,
+            hanViet: v.hanViet,
           })),
         }),
       });
-      if (!response.ok) throw new Error("Failed to create lesson");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create lesson");
+      }
       const newLesson = await response.json();
       set((state) => ({ lessons: [...state.lessons, newLesson] }));
+      toast.success("Lesson created successfully!");
     } catch (error: any) {
       console.error(error);
+      toast.error(error.message || "Failed to create lesson");
       throw error;
     }
   },
@@ -60,15 +68,20 @@ export const useStore = create<AppState>((set, get) => ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedFields),
       });
-      if (!response.ok) throw new Error("Failed to update lesson");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update lesson");
+      }
       const updatedLesson = await response.json();
       set((state) => ({
         lessons: state.lessons.map((lesson) =>
           lesson.id === id ? updatedLesson : lesson,
         ),
       }));
+      toast.success("Lesson updated successfully!");
     } catch (error: any) {
       console.error(error);
+      toast.error(error.message || "Failed to update lesson");
       throw error;
     }
   },
@@ -78,12 +91,17 @@ export const useStore = create<AppState>((set, get) => ({
       const response = await fetch(`${API_URL}/${id}`, {
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("Failed to delete lesson");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete lesson");
+      }
       set((state) => ({
         lessons: state.lessons.filter((lesson) => lesson.id !== id),
       }));
+      toast.success("Lesson deleted successfully!");
     } catch (error: any) {
       console.error(error);
+      toast.error(error.message || "Failed to delete lesson");
     }
   },
 }));

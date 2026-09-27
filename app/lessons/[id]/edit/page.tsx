@@ -28,9 +28,10 @@ export default function EditLessonPage() {
       title: data.title,
       description: data.description || '',
       vocabularies: data.vocabularies.map((v) => ({
-        id: v.id || crypto.randomUUID(),
+        ...(v.id ? { id: v.id } : {}),
         japanese: v.japanese,
         vietnamese: v.vietnamese,
+        hanViet: v.hanViet,
       })),
     });
     router.push('/');

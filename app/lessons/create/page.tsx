@@ -19,6 +19,7 @@ export default function CreateLessonPage() {
         id: crypto.randomUUID(),
         japanese: v.japanese,
         vietnamese: v.vietnamese,
+        hanViet: v.hanViet,
       })),
     };
 

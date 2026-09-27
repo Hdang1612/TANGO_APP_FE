@@ -20,6 +20,7 @@ export const lessonSchema = z.object({
         id: z.string().optional(),
         japanese: z.string().min(1, 'Required'),
         vietnamese: z.string().min(1, 'Required'),
+        hanViet: z.string().optional(),
       })
     )
     .min(1, 'At least one vocabulary item is required'),
@@ -47,7 +48,7 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
       description: initialData?.description || '',
       vocabularies: initialData?.vocabularies.length 
         ? initialData.vocabularies 
-        : [{ japanese: '', vietnamese: '' }],
+        : [{ japanese: '', vietnamese: '', hanViet: '' }],
     },
   });
 
@@ -112,7 +113,7 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-start bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800"
+                className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-4 items-start bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800"
               >
                 <div className="space-y-2">
                   <Label htmlFor={`vocabularies.${index}.japanese`} className="md:hidden">Japanese Word</Label>
@@ -138,6 +139,15 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
                   )}
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor={`vocabularies.${index}.hanViet`} className="md:hidden">Hán Việt (Optional)</Label>
+                  <Input
+                    placeholder="Hán Việt (e.g. CẢM ÂN)"
+                    {...register(`vocabularies.${index}.hanViet` as const)}
+                    className="bg-white dark:bg-slate-950"
+                  />
+                </div>
+
                 <Button
                   type="button"
                   variant="ghost"
@@ -155,7 +165,7 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
             <Button
               type="button"
               variant="outline"
-              onClick={() => append({ japanese: '', vietnamese: '' })}
+              onClick={() => append({ japanese: '', vietnamese: '', hanViet: '' })}
               className="w-full border-dashed border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600 dark:border-slate-700 dark:hover:border-blue-900 dark:hover:bg-slate-900 gap-2 h-12 mt-4 cursor-pointer"
             >
               <PlusCircle className="w-5 h-5" />
