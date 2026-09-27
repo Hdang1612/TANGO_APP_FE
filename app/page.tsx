@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
 } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
   const { lessons, deleteLesson, fetchLessons, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
 
@@ -85,7 +87,8 @@ export default function Home() {
           {lessons.map((lesson) => (
             <Card
               key={lesson.id}
-              className="group hover:shadow-xl transition-all duration-300 border-slate-200 hover:border-blue-200 dark:border-slate-800 dark:hover:border-blue-900 bg-white dark:bg-slate-900 overflow-hidden"
+              onClick={() => router.push(`/lessons/${lesson.id}`)}
+              className="group hover:shadow-xl transition-all duration-300 border-slate-200 hover:border-blue-200 dark:border-slate-800 dark:hover:border-blue-900 bg-white dark:bg-slate-900 overflow-hidden cursor-pointer"
             >
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
@@ -97,7 +100,10 @@ export default function Home() {
                       {lesson.description}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div 
+                    className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Link href={`/lessons/${lesson.id}/edit`}>
                       <Button
                         variant="ghost"
@@ -111,7 +117,10 @@ export default function Home() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => setLessonToDelete(lesson.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLessonToDelete(lesson.id);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -125,7 +134,10 @@ export default function Home() {
                   {(lesson.vocabularies?.length || 0) === 1 ? "word" : "words"}
                 </div>
               </CardContent>
-              <CardFooter className="pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+              <CardFooter 
+                className="pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Link href={`/lessons/${lesson.id}/study`} className="flex-1">
                   <Button
                     variant="default"
