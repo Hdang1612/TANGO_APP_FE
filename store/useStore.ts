@@ -8,7 +8,12 @@ interface AppState {
   error: string | null;
   fetchLessons: () => Promise<void>;
   addLesson: (lesson: Lesson) => Promise<void>;
-  updateLesson: (id: string, lesson: Partial<Lesson>) => Promise<void>;
+  updateLesson: (
+    id: string, 
+    lesson: Partial<Omit<Lesson, "vocabularies">> & {
+      vocabularies?: (Omit<Vocabulary, "id"> & { id?: string })[];
+    }
+  ) => Promise<void>;
   deleteLesson: (id: string) => Promise<void>;
 }
 
