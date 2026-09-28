@@ -21,7 +21,7 @@ export default function QuizPage() {
   const id = params?.id as string;
   
   const lesson = useStore((state) => state.lessons.find((l) => l.id === id));
-  const words = lesson?.vocabularies || [];
+  const words = useMemo(() => lesson?.vocabularies || [], [lesson?.vocabularies]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -54,7 +54,9 @@ export default function QuizPage() {
         return { word, type, correctAnswer, options };
       });
       // shuffle questions
-      setQuestions(generatedQuestions.sort(() => 0.5 - Math.random()));
+      setTimeout(() => {
+        setQuestions(generatedQuestions.sort(() => 0.5 - Math.random()));
+      }, 0);
     }
   }, [words]);
 

@@ -21,6 +21,12 @@ export default function CreateLessonPage() {
         vietnamese: v.vietnamese,
         hanViet: v.hanViet,
       })),
+      kanjis: data.kanjis?.map((k) => ({
+        id: crypto.randomUUID(),
+        character: k.character,
+        meaning: k.meaning,
+        hanViet: k.hanViet,
+      })) || [],
     };
 
     addLesson(newLesson);

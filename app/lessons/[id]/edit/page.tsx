@@ -33,6 +33,12 @@ export default function EditLessonPage() {
         vietnamese: v.vietnamese,
         hanViet: v.hanViet,
       })),
+      kanjis: data.kanjis?.map((k) => ({
+        ...(k.id ? { id: k.id } : {}),
+        character: k.character,
+        meaning: k.meaning,
+        hanViet: k.hanViet,
+      })) || [],
     });
     router.push('/');
   };

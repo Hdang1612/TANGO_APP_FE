@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,25 @@ export const lessonSchema = z.object({
       })
     )
     .min(1, 'At least one vocabulary item is required'),
+  kanjis: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        character: z.string().min(1, 'Required'),
+        meaning: z.string().min(1, 'Required'),
+        hanViet: z.string().optional(),
+        examples: z
+          .array(
+            z.object({
+              word: z.string().min(1, 'Required'),
+              reading: z.string().optional(),
+              meaning: z.string().optional(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
 });
 
 export type LessonFormValues = z.infer<typeof lessonSchema>;
@@ -33,6 +52,75 @@ interface LessonFormProps {
   onSubmit: (data: LessonFormValues) => void;
   pageTitle: string;
   pageDescription: string;
+}
+
+interface KanjiExamplesFormProps {
+  nestIndex: number;
+  control: Control<LessonFormValues>;
+  register: UseFormRegister<LessonFormValues>;
+  errors: FieldErrors<LessonFormValues>;
+}
+
+function KanjiExamplesForm({ nestIndex, control, register, errors }: KanjiExamplesFormProps) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `kanjis.${nestIndex}.examples`,
+  });
+
+  return (
+    <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 md:col-span-4">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Examples (Từ vựng ghép)</h4>
+      </div>
+      
+      <div className="space-y-3">
+        {fields.map((item, kIndex) => (
+          <div key={item.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-white dark:bg-slate-950 p-3 rounded-md border border-slate-200 dark:border-slate-800">
+            <div className="flex-1 space-y-1 w-full">
+              <Input
+                placeholder="Word (e.g. 日本)"
+                {...register(`kanjis.${nestIndex}.examples.${kIndex}.word` as const)}
+                className={`text-sm ${errors?.kanjis?.[nestIndex]?.examples?.[kIndex]?.word ? 'border-red-500' : ''}`}
+              />
+            </div>
+            <div className="flex-1 space-y-1 w-full">
+              <Input
+                placeholder="Reading (e.g. にほん)"
+                {...register(`kanjis.${nestIndex}.examples.${kIndex}.reading` as const)}
+                className="text-sm"
+              />
+            </div>
+            <div className="flex-1 space-y-1 w-full">
+              <Input
+                placeholder="Meaning (e.g. Nhật Bản)"
+                {...register(`kanjis.${nestIndex}.examples.${kIndex}.meaning` as const)}
+                className="text-sm"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => remove(kIndex)}
+              className="text-slate-400 hover:text-red-500 self-end sm:self-auto shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+        
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => append({ word: '', reading: '', meaning: '' })}
+          className="text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 gap-1 h-8 px-2"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Add Example Word
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }: LessonFormProps) {
@@ -49,11 +137,19 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
       vocabularies: initialData?.vocabularies.length 
         ? initialData.vocabularies 
         : [{ japanese: '', vietnamese: '', hanViet: '' }],
+      kanjis: initialData?.kanjis && initialData.kanjis.length > 0
+        ? initialData.kanjis
+        : [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     name: 'vocabularies',
+    control,
+  });
+
+  const { fields: kanjiFields, append: appendKanji, remove: removeKanji } = useFieldArray({
+    name: 'kanjis',
     control,
   });
 
@@ -170,6 +266,81 @@ export function LessonForm({ initialData, onSubmit, pageTitle, pageDescription }
             >
               <PlusCircle className="w-5 h-5" />
               Add New Word
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Kanji List (Optional)</CardTitle>
+            <CardDescription>Add kanjis, their meanings and Sino-Vietnamese readings.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {errors.kanjis?.root && (
+              <p className="text-sm text-red-500 mb-4">{errors.kanjis.root.message}</p>
+            )}
+
+            {kanjiFields.map((field, index) => (
+              <div
+                key={field.id}
+                className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_auto] gap-4 items-start bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-100 dark:border-slate-800"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor={`kanjis.${index}.character`} className="md:hidden">Kanji</Label>
+                  <Input
+                    placeholder="e.g. 日"
+                    {...register(`kanjis.${index}.character` as const)}
+                    className={`text-3xl h-16 text-center ${errors.kanjis?.[index]?.character ? 'border-red-500' : 'bg-white dark:bg-slate-950'}`}
+                  />
+                  {errors.kanjis?.[index]?.character && (
+                    <p className="text-xs text-red-500">{errors.kanjis[index]?.character?.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`kanjis.${index}.meaning`} className="md:hidden">Meaning</Label>
+                  <Input
+                    placeholder="Meaning (e.g. Mặt trời, ngày)"
+                    {...register(`kanjis.${index}.meaning` as const)}
+                    className={errors.kanjis?.[index]?.meaning ? 'border-red-500' : 'bg-white dark:bg-slate-950'}
+                  />
+                  {errors.kanjis?.[index]?.meaning && (
+                    <p className="text-xs text-red-500">{errors.kanjis[index]?.meaning?.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`kanjis.${index}.hanViet`} className="md:hidden">Hán Việt</Label>
+                  <Input
+                    placeholder="Hán Việt (e.g. Nhật)"
+                    {...register(`kanjis.${index}.hanViet` as const)}
+                    className="bg-white dark:bg-slate-950"
+                  />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeKanji(index)}
+                  className="mt-6 md:mt-0 text-slate-400 hover:text-red-500 hover:bg-red-50 self-start cursor-pointer"
+                  title="Remove kanji"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+
+                <KanjiExamplesForm nestIndex={index} control={control} register={register} errors={errors} />
+              </div>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => appendKanji({ character: '', meaning: '', hanViet: '' })}
+              className="w-full border-dashed border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600 dark:border-slate-700 dark:hover:border-blue-900 dark:hover:bg-slate-900 gap-2 h-12 mt-4 cursor-pointer"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Add New Kanji
             </Button>
           </CardContent>
           <CardFooter className="bg-slate-50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800 p-6 flex justify-end gap-3">

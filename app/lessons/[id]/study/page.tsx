@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,36 @@ export default function StudyFlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
+  type CardItem = {
+    frontText: string;
+    backText: string;
+    subText?: string;
+    type: 'vocab' | 'kanji';
+  };
+
+  const cards: CardItem[] = [
+    ...(lesson?.vocabularies || []).map((v) => ({
+      frontText: v.japanese,
+      backText: v.vietnamese,
+      subText: v.hanViet,
+      type: 'vocab' as const,
+    })),
+  ];
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < cards.length - 1) {
+      setIsFlipped(false);
+      setCurrentIndex((prev) => prev + 1);
+    }
+  }, [currentIndex, cards.length]);
+
+  const handlePrev = useCallback(() => {
+    if (currentIndex > 0) {
+      setIsFlipped(false);
+      setCurrentIndex((prev) => prev - 1);
+    }
+  }, [currentIndex]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -32,7 +62,7 @@ export default function StudyFlashcardsPage() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, lesson]);
+  }, [handleNext, handlePrev]);
 
   if (!lesson) {
     return (
@@ -44,10 +74,8 @@ export default function StudyFlashcardsPage() {
       </div>
     );
   }
-
-  const words = lesson.vocabularies;
   
-  if (words.length === 0) {
+  if (cards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-in fade-in">
         <h2 className="text-2xl font-bold text-slate-800">No words in this lesson</h2>
@@ -58,21 +86,7 @@ export default function StudyFlashcardsPage() {
     );
   }
 
-  const currentWord = words[currentIndex];
-
-  const handleNext = () => {
-    if (currentIndex < words.length - 1) {
-      setIsFlipped(false);
-      setCurrentIndex((prev) => prev + 1);
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setIsFlipped(false);
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
+  const currentCard = cards[currentIndex];
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-in-out">
@@ -89,7 +103,7 @@ export default function StudyFlashcardsPage() {
           </div>
         </div>
         <div className="text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1.5 rounded-full">
-          Card {currentIndex + 1} of {words.length}
+          Card {currentIndex + 1} of {cards.length}
         </div>
       </div>
 
@@ -101,15 +115,17 @@ export default function StudyFlashcardsPage() {
           }`}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          {/* Front Face (Japanese & Hán Việt) */}
+          {/* Front Face (Japanese / Kanji & Hán Việt) */}
           <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center p-8 hover:border-blue-300 transition-colors">
-            <span className="text-slate-400 text-sm font-medium tracking-widest uppercase mb-4">Japanese</span>
-            <div className="text-6xl md:text-8xl font-bold text-slate-800 dark:text-slate-100 text-center mb-2">
-              {currentWord.japanese}
+            <span className="text-slate-400 text-sm font-medium tracking-widest uppercase mb-4">
+              {currentCard.type === 'vocab' ? 'Japanese' : 'Kanji'}
+            </span>
+            <div className={`font-bold text-slate-800 dark:text-slate-100 text-center mb-2 ${currentCard.type === 'kanji' ? 'text-8xl md:text-9xl' : 'text-6xl md:text-8xl'}`}>
+              {currentCard.frontText}
             </div>
-            {currentWord.hanViet && (
+            {currentCard.subText && (
               <div className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 mt-2 font-medium tracking-wide">
-                [{currentWord.hanViet}]
+                [{currentCard.subText}]
               </div>
             )}
             <div className="absolute bottom-6 text-slate-400 flex items-center gap-2 text-sm">
@@ -118,11 +134,13 @@ export default function StudyFlashcardsPage() {
             </div>
           </div>
 
-          {/* Back Face (Vietnamese) */}
+          {/* Back Face (Vietnamese / Meaning) */}
           <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-blue-50 dark:bg-slate-800 rounded-2xl border border-blue-200 dark:border-slate-700 flex flex-col items-center justify-center p-8">
-            <span className="text-blue-400 dark:text-blue-300 text-sm font-medium tracking-widest uppercase mb-8">Vietnamese</span>
+            <span className="text-blue-400 dark:text-blue-300 text-sm font-medium tracking-widest uppercase mb-8">
+              {currentCard.type === 'vocab' ? 'Vietnamese' : 'Meaning'}
+            </span>
             <div className="text-4xl md:text-6xl font-bold text-blue-900 dark:text-blue-100 text-center">
-              {currentWord.vietnamese}
+              {currentCard.backText}
             </div>
           </div>
         </div>
@@ -144,7 +162,7 @@ export default function StudyFlashcardsPage() {
         <div className="flex-1 mx-8 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
           <div 
             className="h-full bg-blue-500 transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / words.length) * 100}%` }}
+            style={{ width: `${((currentIndex + 1) / cards.length) * 100}%` }}
           />
         </div>
 
@@ -153,7 +171,7 @@ export default function StudyFlashcardsPage() {
           size="lg"
           className="gap-2 w-32 bg-blue-600 hover:bg-blue-700 text-white"
           onClick={handleNext} 
-          disabled={currentIndex === words.length - 1}
+          disabled={currentIndex === cards.length - 1}
         >
           Next
           <ChevronRight className="w-5 h-5" />

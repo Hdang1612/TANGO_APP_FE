@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Lesson, Vocabulary } from "@/types";
+import { Lesson, Vocabulary, Kanji } from "@/types";
 import { toast } from "sonner";
 
 interface AppState {
@@ -10,8 +10,9 @@ interface AppState {
   addLesson: (lesson: Lesson) => Promise<void>;
   updateLesson: (
     id: string, 
-    lesson: Partial<Omit<Lesson, "vocabularies">> & {
+    lesson: Partial<Omit<Lesson, "vocabularies" | "kanjis">> & {
       vocabularies?: (Omit<Vocabulary, "id"> & { id?: string })[];
+      kanjis?: (Omit<Kanji, "id"> & { id?: string })[];
     }
   ) => Promise<void>;
   deleteLesson: (id: string) => Promise<void>;
@@ -19,7 +20,7 @@ interface AppState {
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/lessons`;
 
-export const useStore = create<AppState>((set, get) => ({
+export const useStore = create<AppState>((set) => ({
   lessons: [],
   isLoading: false,
   error: null,
@@ -31,9 +32,10 @@ export const useStore = create<AppState>((set, get) => ({
       if (!response.ok) throw new Error("Failed to fetch lessons");
       const data = await response.json();
       set({ lessons: data, isLoading: false });
-    } catch (error: any) {
-      set({ error: error.message, isLoading: false });
-      toast.error(error.message || "Failed to fetch lessons");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch lessons";
+      set({ error: errorMessage, isLoading: false });
+      toast.error(errorMessage);
     }
   },
 
@@ -45,11 +47,21 @@ export const useStore = create<AppState>((set, get) => ({
         body: JSON.stringify({
           title: lesson.title,
           description: lesson.description,
-          vocabularies: lesson.vocabularies.map((v) => ({
+          vocabularies: lesson.vocabularies?.map((v) => ({
             japanese: v.japanese,
             vietnamese: v.vietnamese,
             hanViet: v.hanViet,
-          })),
+          })) || [],
+          kanjis: lesson.kanjis?.map((k) => ({
+            character: k.character,
+            meaning: k.meaning,
+            hanViet: k.hanViet,
+            examples: k.examples?.map(e => ({
+              word: e.word,
+              reading: e.reading,
+              meaning: e.meaning
+            })) || []
+          })) || [],
         }),
       });
       if (!response.ok) {
@@ -59,9 +71,10 @@ export const useStore = create<AppState>((set, get) => ({
       const newLesson = await response.json();
       set((state) => ({ lessons: [...state.lessons, newLesson] }));
       toast.success("Lesson created successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to create lesson";
       console.error(error);
-      toast.error(error.message || "Failed to create lesson");
+      toast.error(errorMessage);
       throw error;
     }
   },
@@ -84,9 +97,10 @@ export const useStore = create<AppState>((set, get) => ({
         ),
       }));
       toast.success("Lesson updated successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update lesson";
       console.error(error);
-      toast.error(error.message || "Failed to update lesson");
+      toast.error(errorMessage);
       throw error;
     }
   },
@@ -104,9 +118,10 @@ export const useStore = create<AppState>((set, get) => ({
         lessons: state.lessons.filter((lesson) => lesson.id !== id),
       }));
       toast.success("Lesson deleted successfully!");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete lesson";
       console.error(error);
-      toast.error(error.message || "Failed to delete lesson");
+      toast.error(errorMessage);
     }
   },
 }));
