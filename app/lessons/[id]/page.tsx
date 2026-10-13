@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Presentation, BookOpen, Layers } from "lucide-react";
+import { ArrowLeft, Presentation, BookOpen, Layers, PenLine } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -70,6 +70,12 @@ export default function LessonOverviewPage() {
             <Button variant="outline" className="w-full gap-2">
               <BookOpen className="w-4 h-4" />
               Quiz
+            </Button>
+          </Link>
+          <Link href={`/lessons/${lesson.id}/typing-quiz`} className="flex-1 sm:flex-none">
+            <Button variant="outline" className="w-full gap-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 dark:border-purple-800 dark:text-purple-400 dark:hover:bg-purple-950/50">
+              <PenLine className="w-4 h-4" />
+              Typing Quiz
             </Button>
           </Link>
         </div>

@@ -29,14 +29,10 @@ export default function QuizPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
 
-  // Generate quiz questions
   useEffect(() => {
     if (words.length > 0) {
       const generatedQuestions = words.map((word) => {
-        // randomly choose question type
         const type: 'ja-to-vi' | 'vi-to-ja' = Math.random() > 0.5 ? 'ja-to-vi' : 'vi-to-ja';
-
-        // get up to 3 distractors
         const otherWords = words.filter(w => w.id !== word.id);
         const shuffledOthers = [...otherWords].sort(() => 0.5 - Math.random());
         
@@ -53,7 +49,6 @@ export default function QuizPage() {
         const options = [correctAnswer, ...distractors].sort(() => 0.5 - Math.random());
         return { word, type, correctAnswer, options };
       });
-      // shuffle questions
       setTimeout(() => {
         setQuestions(generatedQuestions.sort(() => 0.5 - Math.random()));
       }, 0);
@@ -61,14 +56,10 @@ export default function QuizPage() {
   }, [words]);
 
   const handleOptionClick = (option: string) => {
-    if (selectedOption !== null) return; // prevent multiple clicks
-    
+    if (selectedOption !== null) return;
     setSelectedOption(option);
-    
     const isCorrect = option === questions[currentIndex].correctAnswer;
-    if (isCorrect) {
-      setScore(prev => prev + 1);
-    }
+    if (isCorrect) setScore(prev => prev + 1);
 
     setTimeout(() => {
       setSelectedOption(null);
@@ -85,7 +76,6 @@ export default function QuizPage() {
     setScore(0);
     setSelectedOption(null);
     setIsFinished(false);
-    // reshuffle
     setQuestions(prev => [...prev].sort(() => 0.5 - Math.random()));
   };
 
@@ -154,7 +144,7 @@ export default function QuizPage() {
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/">
+          <Link href={`/lessons/${id}`}>
             <Button variant="ghost" size="icon" className="text-slate-500 hover:text-slate-900 cursor-pointer">
               <ArrowLeft className="w-5 h-5" />
             </Button>
