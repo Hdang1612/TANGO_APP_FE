@@ -7,6 +7,7 @@ interface AppState {
   isLoading: boolean;
   error: string | null;
   fetchLessons: () => Promise<void>;
+  fetchLessonById: (id: string) => Promise<Lesson | null>;
   addLesson: (lesson: Lesson) => Promise<void>;
   updateLesson: (
     id: string, 
@@ -36,6 +37,32 @@ export const useStore = create<AppState>((set) => ({
       const errorMessage = error instanceof Error ? error.message : "Failed to fetch lessons";
       set({ error: errorMessage, isLoading: false });
       toast.error(errorMessage);
+    }
+  },
+
+  fetchLessonById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_URL}/${id}`);
+      if (!response.ok) {
+        set({ isLoading: false });
+        return null;
+      }
+      const data: Lesson = await response.json();
+      set((state) => {
+        const index = state.lessons.findIndex((l) => l.id === id);
+        return {
+          lessons: index >= 0
+            ? state.lessons.map((l) => (l.id === id ? data : l))
+            : [...state.lessons, data],
+          isLoading: false,
+        };
+      });
+      return data;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch lesson";
+      set({ error: errorMessage, isLoading: false });
+      return null;
     }
   },
 

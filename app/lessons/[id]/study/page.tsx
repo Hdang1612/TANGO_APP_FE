@@ -12,7 +12,21 @@ export default function StudyFlashcardsPage() {
   const router = useRouter();
   const id = params?.id as string;
   
-  const lesson = useStore((state) => state.lessons.find((l) => l.id === id));
+  const { lessons, fetchLessons, fetchLessonById, isLoading } = useStore();
+  const lesson = lessons.find((l) => l.id === id);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  useEffect(() => {
+    if (!lesson) {
+      if (lessons.length === 0) {
+        fetchLessons().finally(() => setHasAttemptedFetch(true));
+      } else {
+        fetchLessonById(id).finally(() => setHasAttemptedFetch(true));
+      }
+    } else {
+      setHasAttemptedFetch(true);
+    }
+  }, [id, lesson, lessons.length, fetchLessons, fetchLessonById]);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -63,6 +77,15 @@ export default function StudyFlashcardsPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev]);
+
+  if (!hasAttemptedFetch || isLoading || (!lesson && lessons.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center space-y-3 animate-in fade-in">
+        <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-slate-500 font-medium">Đang tải bài học...</p>
+      </div>
+    );
+  }
 
   if (!lesson) {
     return (

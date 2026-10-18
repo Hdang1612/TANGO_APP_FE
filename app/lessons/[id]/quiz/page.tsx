@@ -20,8 +20,22 @@ export default function QuizPage() {
   const router = useRouter();
   const id = params?.id as string;
   
-  const lesson = useStore((state) => state.lessons.find((l) => l.id === id));
+  const { lessons, fetchLessons, fetchLessonById, isLoading } = useStore();
+  const lesson = lessons.find((l) => l.id === id);
   const words = useMemo(() => lesson?.vocabularies || [], [lesson?.vocabularies]);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  useEffect(() => {
+    if (!lesson) {
+      if (lessons.length === 0) {
+        fetchLessons().finally(() => setHasAttemptedFetch(true));
+      } else {
+        fetchLessonById(id).finally(() => setHasAttemptedFetch(true));
+      }
+    } else {
+      setHasAttemptedFetch(true);
+    }
+  }, [id, lesson, lessons.length, fetchLessons, fetchLessonById]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -79,6 +93,15 @@ export default function QuizPage() {
     setQuestions(prev => [...prev].sort(() => 0.5 - Math.random()));
   };
 
+  if (!hasAttemptedFetch || isLoading || (!lesson && lessons.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center space-y-3 animate-in fade-in">
+        <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-slate-500 font-medium">Đang tải bài học...</p>
+      </div>
+    );
+  }
+
   if (!lesson) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-in fade-in">
@@ -102,7 +125,14 @@ export default function QuizPage() {
     );
   }
 
-  if (questions.length === 0) return null;
+  if (questions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center space-y-3 animate-in fade-in">
+        <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-slate-500 font-medium">Đang chuẩn bị câu hỏi...</p>
+      </div>
+    );
+  }
 
   if (isFinished) {
     return (

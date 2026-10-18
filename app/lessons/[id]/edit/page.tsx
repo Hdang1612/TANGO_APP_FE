@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { useParams, useRouter } from 'next/navigation';
 import { LessonForm, LessonFormValues } from '@/components/LessonForm';
@@ -9,8 +10,31 @@ export default function EditLessonPage() {
   const router = useRouter();
   const id = params?.id as string;
   
-  const lesson = useStore((state) => state.lessons.find((l) => l.id === id));
+  const { lessons, fetchLessons, fetchLessonById, isLoading } = useStore();
+  const lesson = lessons.find((l) => l.id === id);
   const updateLesson = useStore((state) => state.updateLesson);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  useEffect(() => {
+    if (!lesson) {
+      if (lessons.length === 0) {
+        fetchLessons().finally(() => setHasAttemptedFetch(true));
+      } else {
+        fetchLessonById(id).finally(() => setHasAttemptedFetch(true));
+      }
+    } else {
+      setHasAttemptedFetch(true);
+    }
+  }, [id, lesson, lessons.length, fetchLessons, fetchLessonById]);
+
+  if (!hasAttemptedFetch || isLoading || (!lesson && lessons.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center space-y-3 animate-in fade-in">
+        <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-slate-500 font-medium">Đang tải bài học...</p>
+      </div>
+    );
+  }
 
   if (!lesson) {
     return (
