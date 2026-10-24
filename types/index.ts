@@ -16,6 +16,8 @@ export interface Kanji {
   character: string;
   meaning: string;
   hanViet?: string;
+  onYomi?: string; // Âm on (音読み)
+  kunYomi?: string; // Âm kun (訓読み)
   examples?: KanjiExample[];
 }
 

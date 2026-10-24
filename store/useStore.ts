@@ -83,6 +83,8 @@ export const useStore = create<AppState>((set) => ({
             character: k.character,
             meaning: k.meaning,
             hanViet: k.hanViet,
+            onYomi: k.onYomi,
+            kunYomi: k.kunYomi,
             examples: k.examples?.map(e => ({
               word: e.word,
               reading: e.reading,
