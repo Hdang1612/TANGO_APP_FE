@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
-import { BookA } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,6 +36,7 @@ export default function RootLayout({
         <main className="flex-1 container mx-auto p-4 md:p-6 lg:p-8">
           {children}
         </main>
+        <GlobalLoadingOverlay />
         <Toaster />
       </body>
     </html>

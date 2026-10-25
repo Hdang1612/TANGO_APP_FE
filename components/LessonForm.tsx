@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { PlusCircle, Trash2, ArrowLeft, Save } from 'lucide-react';
+import { PlusCircle, Trash2, ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Lesson } from '@/types';
 
@@ -202,7 +202,7 @@ export function LessonForm({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LessonFormValues>({
     resolver: zodResolver(isKanjiMode ? kanjiLessonSchema : vocabularyLessonSchema) as any,
     defaultValues: {
@@ -358,12 +358,25 @@ export function LessonForm({
               </Button>
             </CardContent>
             <CardFooter className="bg-slate-50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800 p-6 flex justify-end gap-3">
-              <Link href={defaultBackHref}>
-                <Button type="button" variant="ghost" className="cursor-pointer">Hủy</Button>
+              <Link href={isSubmitting ? '#' : defaultBackHref} className={isSubmitting ? 'pointer-events-none' : ''}>
+                <Button type="button" variant="ghost" disabled={isSubmitting} className="cursor-pointer">Hủy</Button>
               </Link>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6 cursor-pointer">
-                <Save className="w-4 h-4" />
-                Lưu bài học
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-2 px-6 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Lưu bài học
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>
@@ -464,12 +477,25 @@ export function LessonForm({
               </Button>
             </CardContent>
             <CardFooter className="bg-slate-50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-800 p-6 flex justify-end gap-3">
-              <Link href={defaultBackHref}>
-                <Button type="button" variant="ghost" className="cursor-pointer">Hủy</Button>
+              <Link href={isSubmitting ? '#' : defaultBackHref} className={isSubmitting ? 'pointer-events-none' : ''}>
+                <Button type="button" variant="ghost" disabled={isSubmitting} className="cursor-pointer">Hủy</Button>
               </Link>
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white gap-2 px-6 cursor-pointer">
-                <Save className="w-4 h-4" />
-                Lưu bài học Hán tự
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="bg-purple-600 hover:bg-purple-700 text-white gap-2 px-6 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Lưu bài học Hán tự
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>

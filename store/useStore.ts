@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { Lesson, Vocabulary, Kanji } from "@/types";
 import { toast } from "sonner";
+import axios from "axios";
+import { api } from "@/lib/api";
 
 interface AppState {
   lessons: Lesson[];
@@ -19,7 +21,12 @@ interface AppState {
   deleteLesson: (id: string) => Promise<void>;
 }
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/lessons`;
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+};
 
 export const useStore = create<AppState>((set) => ({
   lessons: [],
@@ -29,12 +36,10 @@ export const useStore = create<AppState>((set) => ({
   fetchLessons: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Failed to fetch lessons");
-      const data = await response.json();
-      set({ lessons: data, isLoading: false });
+      const response = await api.get<Lesson[]>("/lessons", { skipLoading: true });
+      set({ lessons: response.data, isLoading: false });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch lessons";
+      const errorMessage = getErrorMessage(error, "Failed to fetch lessons");
       set({ error: errorMessage, isLoading: false });
       toast.error(errorMessage);
     }
@@ -43,12 +48,8 @@ export const useStore = create<AppState>((set) => ({
   fetchLessonById: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`${API_URL}/${id}`);
-      if (!response.ok) {
-        set({ isLoading: false });
-        return null;
-      }
-      const data: Lesson = await response.json();
+      const response = await api.get<Lesson>(`/lessons/${id}`, { skipLoading: true });
+      const data = response.data;
       set((state) => {
         const index = state.lessons.findIndex((l) => l.id === id);
         return {
@@ -60,7 +61,7 @@ export const useStore = create<AppState>((set) => ({
       });
       return data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to fetch lesson";
+      const errorMessage = getErrorMessage(error, "Failed to fetch lesson");
       set({ error: errorMessage, isLoading: false });
       return null;
     }
@@ -68,10 +69,9 @@ export const useStore = create<AppState>((set) => ({
 
   addLesson: async (lesson) => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await api.post<Lesson>(
+        "/lessons",
+        {
           title: lesson.title,
           description: lesson.description,
           vocabularies: lesson.vocabularies?.map((v) => ({
@@ -91,17 +91,13 @@ export const useStore = create<AppState>((set) => ({
               meaning: e.meaning
             })) || []
           })) || [],
-        }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to create lesson");
-      }
-      const newLesson = await response.json();
+        }
+      );
+      const newLesson = response.data;
       set((state) => ({ lessons: [...state.lessons, newLesson] }));
       toast.success("Lesson created successfully!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to create lesson";
+      const errorMessage = getErrorMessage(error, "Failed to create lesson");
       console.error(error);
       toast.error(errorMessage);
       throw error;
@@ -110,16 +106,11 @@ export const useStore = create<AppState>((set) => ({
 
   updateLesson: async (id, updatedFields) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedFields),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to update lesson");
-      }
-      const updatedLesson = await response.json();
+      const response = await api.put<Lesson>(
+        `/lessons/${id}`,
+        updatedFields
+      );
+      const updatedLesson = response.data;
       set((state) => ({
         lessons: state.lessons.map((lesson) =>
           lesson.id === id ? updatedLesson : lesson,
@@ -127,7 +118,7 @@ export const useStore = create<AppState>((set) => ({
       }));
       toast.success("Lesson updated successfully!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to update lesson";
+      const errorMessage = getErrorMessage(error, "Failed to update lesson");
       console.error(error);
       toast.error(errorMessage);
       throw error;
@@ -136,19 +127,13 @@ export const useStore = create<AppState>((set) => ({
 
   deleteLesson: async (id) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete lesson");
-      }
+      await api.delete(`/lessons/${id}`);
       set((state) => ({
         lessons: state.lessons.filter((lesson) => lesson.id !== id),
       }));
       toast.success("Lesson deleted successfully!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete lesson";
+      const errorMessage = getErrorMessage(error, "Failed to delete lesson");
       console.error(error);
       toast.error(errorMessage);
     }
