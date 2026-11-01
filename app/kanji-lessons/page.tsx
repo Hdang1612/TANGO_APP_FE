@@ -69,7 +69,7 @@ export default function KanjiLessonsPage() {
       id: "grammar",
       label: "Ngữ pháp",
       icon: <BookMarked className="w-4 h-4" />,
-      href: "/",
+      href: "/?tab=grammar",
     },
     {
       id: "kanji",

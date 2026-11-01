@@ -53,8 +53,10 @@ function HomeContent() {
   }, [fetchLessons]);
 
   useEffect(() => {
-    if (tabParam === "grammar" || tabParam === "vocabulary") {
-      setActiveTab(tabParam);
+    if (tabParam === "grammar") {
+      setActiveTab("grammar");
+    } else {
+      setActiveTab("vocabulary");
     }
   }, [tabParam]);
 
