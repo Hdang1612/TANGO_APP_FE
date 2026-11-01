@@ -29,3 +29,29 @@ export interface Lesson {
   kanjis: Kanji[];
   createdAt: string;
 }
+
+export interface GrammarExample {
+  japanese: string;
+  vietnamese?: string;
+}
+
+export interface Grammar {
+  id: string;
+  name: string;
+  usage: string;
+  structure?: string;
+  examples?: GrammarExample[];
+  groupId?: string;
+  group?: GrammarGroup;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GrammarGroup {
+  id: string;
+  name: string;
+  description?: string;
+  grammars: Grammar[];
+  createdAt: string;
+  updatedAt: string;
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,18 +33,30 @@ import {
   BookMarked,
   Brush,
 } from "lucide-react";
+import GrammarTab from "@/components/GrammarTab";
 
 type Tab = "vocabulary" | "grammar" | "kanji";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as Tab | null;
+
   const { lessons, deleteLesson, fetchLessons, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("vocabulary");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam === "grammar" ? "grammar" : "vocabulary"
+  );
 
   useEffect(() => {
     fetchLessons();
   }, [fetchLessons]);
+
+  useEffect(() => {
+    if (tabParam === "grammar" || tabParam === "vocabulary") {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   const confirmDelete = () => {
     if (lessonToDelete) {
@@ -89,6 +101,7 @@ export default function Home() {
                   router.push("/kanji-lessons");
                 } else {
                   setActiveTab(tab.id);
+                  router.replace(tab.id === "grammar" ? "/?tab=grammar" : "/");
                 }
               }}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold rounded-t-lg border-b-2 transition-all duration-200 cursor-pointer ${
@@ -230,18 +243,8 @@ export default function Home() {
         </div>
       )}
 
-      {/* Grammar Tab Content - placeholder */}
-      {activeTab === "grammar" && (
-        <div className="text-center py-20 bg-slate-100 rounded-xl border border-dashed border-slate-300 dark:bg-slate-900 dark:border-slate-800">
-          <BookMarked className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300">
-            Ngữ pháp
-          </h3>
-          <p className="text-slate-500 dark:text-slate-400">
-            Tính năng ngữ pháp sẽ được ra mắt sớm.
-          </p>
-        </div>
-      )}
+      {/* Grammar Tab Content */}
+      {activeTab === "grammar" && <GrammarTab />}
 
       <Dialog
         open={!!lessonToDelete}
@@ -270,5 +273,13 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
