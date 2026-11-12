@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Grammar, GrammarGroup } from '@/types';
+import { Grammar } from '@/types';
 import { useGrammarStore } from '@/store/useGrammarStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +28,6 @@ import {
   Save,
   PlusCircle,
   Trash2,
-  Loader2,
   FolderPlus,
   BookMarked,
   Sparkles,
@@ -46,7 +44,7 @@ export interface GrammarFormValues {
 
 interface GrammarFormProps {
   initialData?: Grammar | null;
-  onSubmit: (data: GrammarFormValues) => Promise<void>;
+  onSubmit: (data: GrammarFormValues) => void | Promise<void>;
   pageTitle: string;
   pageDescription: string;
   backHref?: string;
@@ -59,7 +57,6 @@ export function GrammarForm({
   pageDescription,
   backHref = '/?tab=grammar',
 }: GrammarFormProps) {
-  const router = useRouter();
   const { grammarGroups, createGrammarGroup } = useGrammarStore();
 
   const [name, setName] = useState(initialData?.name || '');
@@ -75,11 +72,9 @@ export function GrammarForm({
       : [{ japanese: '', vietnamese: '' }]
   );
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
-  const [creatingGroup, setCreatingGroup] = useState(false);
 
   // Add / Remove / Update examples
   const handleAddExample = () => {
@@ -102,31 +97,24 @@ export function GrammarForm({
     });
   };
 
-  // Quick group creation
+  // Quick group creation (GlobalLoadingOverlay handles loading state automatically)
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
       toast.error('Vui lòng nhập tên nhóm');
       return;
     }
-    setCreatingGroup(true);
-    try {
-      const created = await createGrammarGroup({
-        name: newGroupName.trim(),
-        description: newGroupDesc.trim() || undefined,
-      });
-      setGroupId(created.id);
-      setNewGroupName('');
-      setNewGroupDesc('');
-      setGroupModalOpen(false);
-    } catch {
-      // toast is already handled in store
-    } finally {
-      setCreatingGroup(false);
-    }
+    const created = await createGrammarGroup({
+      name: newGroupName.trim(),
+      description: newGroupDesc.trim() || undefined,
+    });
+    setGroupId(created.id);
+    setNewGroupName('');
+    setNewGroupDesc('');
+    setGroupModalOpen(false);
   };
 
   // Submit form
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) {
@@ -138,20 +126,13 @@ export function GrammarForm({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await onSubmit({
-        name: name.trim(),
-        usage: usage.trim(),
-        structure: structure.trim() || undefined,
-        groupId: groupId || undefined,
-        examples: examples.filter((ex) => ex.japanese.trim() || ex.vietnamese.trim()),
-      });
-    } catch {
-      // error handled in caller/store
-    } finally {
-      setIsSubmitting(false);
-    }
+    onSubmit({
+      name: name.trim(),
+      usage: usage.trim(),
+      structure: structure.trim() || undefined,
+      groupId: groupId || undefined,
+      examples: examples.filter((ex) => ex.japanese.trim() || ex.vietnamese.trim()),
+    });
   };
 
   return (
@@ -347,14 +328,9 @@ export function GrammarForm({
             </Link>
             <Button
               type="submit"
-              disabled={isSubmitting}
               className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow-lg hover:shadow-green-600/25 transition-all cursor-pointer min-w-[140px]"
             >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
+              <Save className="w-4 h-4" />
               {initialData ? 'Lưu thay đổi' : 'Tạo ngữ pháp'}
             </Button>
           </CardFooter>
@@ -405,10 +381,8 @@ export function GrammarForm({
             <Button
               type="button"
               onClick={handleCreateGroup}
-              disabled={creatingGroup}
               className="bg-green-600 hover:bg-green-700 text-white gap-2 cursor-pointer"
             >
-              {creatingGroup && <Loader2 className="w-4 h-4 animate-spin" />}
               Tạo nhóm
             </Button>
           </DialogFooter>

@@ -160,7 +160,6 @@ function GroupFormDialog({
   const { createGrammarGroup, updateGrammarGroup } = useGrammarStore();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (editGroup) {
@@ -174,25 +173,18 @@ function GroupFormDialog({
 
   const handleSubmit = async () => {
     if (!name.trim()) return toast.error('Vui lòng nhập tên nhóm');
-    setSaving(true);
-    try {
-      if (editGroup) {
-        await updateGrammarGroup(editGroup.id, {
-          name: name.trim(),
-          description: description.trim() || undefined,
-        });
-      } else {
-        await createGrammarGroup({
-          name: name.trim(),
-          description: description.trim() || undefined,
-        });
-      }
-      onClose();
-    } catch {
-      // error handled in store
-    } finally {
-      setSaving(false);
+    if (editGroup) {
+      await updateGrammarGroup(editGroup.id, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
+    } else {
+      await createGrammarGroup({
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
     }
+    onClose();
   };
 
   return (
@@ -237,10 +229,8 @@ function GroupFormDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={saving}
             className="bg-green-600 hover:bg-green-700 text-white gap-2 cursor-pointer"
           >
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {editGroup ? 'Lưu thay đổi' : 'Tạo nhóm'}
           </Button>
         </DialogFooter>
@@ -284,19 +274,14 @@ export default function GrammarTab() {
     });
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!deleteTarget) return;
-    try {
-      if (deleteTarget.type === 'grammar') {
-        await deleteGrammar(deleteTarget.id);
-      } else {
-        await deleteGrammarGroup(deleteTarget.id);
-      }
-    } catch {
-      // handled
-    } finally {
-      setDeleteTarget(null);
+    if (deleteTarget.type === 'grammar') {
+      deleteGrammar(deleteTarget.id);
+    } else {
+      deleteGrammarGroup(deleteTarget.id);
     }
+    setDeleteTarget(null);
   };
 
   // Filtered grammars for "all" view
