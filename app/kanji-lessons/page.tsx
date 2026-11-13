@@ -33,23 +33,34 @@ import {
   Edit2,
   Trash2,
 } from "lucide-react";
+import { Pagination } from "@/components/ui/pagination";
 
 type Tab = "vocabulary" | "grammar" | "kanji";
 
 export default function KanjiLessonsPage() {
   const router = useRouter();
-  const { lessons, fetchLessons, deleteLesson, isLoading } = useStore();
+  const { lessons, pagination, fetchLessons, deleteLesson, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 9;
   const activeTab: Tab = "kanji";
 
   useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
+    fetchLessons({ type: "kanji", page: currentPage, limit });
+  }, [fetchLessons, currentPage]);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (lessonToDelete) {
-      deleteLesson(lessonToDelete);
+      await deleteLesson(lessonToDelete);
       setLessonToDelete(null);
+      const nextTotal = (pagination?.total || 1) - 1;
+      const maxPage = Math.max(1, Math.ceil(nextTotal / limit));
+      const targetPage = currentPage > maxPage ? maxPage : currentPage;
+      if (targetPage !== currentPage) {
+        setCurrentPage(targetPage);
+      } else {
+        fetchLessons({ type: "kanji", page: targetPage, limit });
+      }
     }
   };
 
@@ -142,7 +153,8 @@ export default function KanjiLessonsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {kanjiLessons.map((lesson) => (
             <Card
               key={lesson.id}
@@ -244,7 +256,23 @@ export default function KanjiLessonsPage() {
             </Card>
           ))}
         </div>
-      )}
+
+        {pagination && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            pageSize={limit}
+            itemLabel="bài học"
+            theme="purple"
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
+      </>
+    )}
 
       <Dialog
         open={!!lessonToDelete}

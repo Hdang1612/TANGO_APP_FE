@@ -1,14 +1,21 @@
 import { create } from "zustand";
-import { Lesson, Vocabulary, Kanji } from "@/types";
+import { Lesson, Vocabulary, Kanji, PaginationMeta, PaginatedResponse } from "@/types";
 import { toast } from "sonner";
 import axios from "axios";
 import { api } from "@/lib/api";
 
+export interface FetchLessonsParams {
+  page?: number;
+  limit?: number;
+  type?: "vocabulary" | "kanji";
+}
+
 interface AppState {
   lessons: Lesson[];
+  pagination: PaginationMeta | null;
   isLoading: boolean;
   error: string | null;
-  fetchLessons: () => Promise<void>;
+  fetchLessons: (params?: FetchLessonsParams) => Promise<PaginatedResponse<Lesson> | Lesson[]>;
   fetchLessonById: (id: string) => Promise<Lesson | null>;
   addLesson: (lesson: Lesson) => Promise<void>;
   updateLesson: (
@@ -30,18 +37,48 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
 
 export const useStore = create<AppState>((set) => ({
   lessons: [],
+  pagination: null,
   isLoading: false,
   error: null,
 
-  fetchLessons: async () => {
+  fetchLessons: async (params?: FetchLessonsParams) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await api.get<Lesson[]>("/lessons", { skipLoading: true });
-      set({ lessons: response.data, isLoading: false });
+      const response = await api.get<PaginatedResponse<Lesson> | Lesson[]>("/lessons", {
+        params,
+        skipLoading: true,
+      });
+      const data = response.data;
+      if (Array.isArray(data)) {
+        set({
+          lessons: data,
+          pagination: {
+            page: 1,
+            limit: data.length,
+            total: data.length,
+            totalPages: 1,
+          },
+          isLoading: false,
+        });
+        return data;
+      } else {
+        set({
+          lessons: data.data,
+          pagination: {
+            page: data.page,
+            limit: data.limit,
+            total: data.total,
+            totalPages: data.totalPages,
+          },
+          isLoading: false,
+        });
+        return data;
+      }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, "Failed to fetch lessons");
       set({ error: errorMessage, isLoading: false });
       toast.error(errorMessage);
+      throw error;
     }
   },
 

@@ -28,6 +28,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
 
 // ─── Grammar Card ─────────────────────────────────────────────────────────────
 
@@ -261,6 +262,12 @@ export default function GrammarTab() {
   } | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
+  // Pagination states
+  const [allPage, setAllPage] = useState(1);
+  const allPageSize = 10;
+  const [groupPage, setGroupPage] = useState(1);
+  const groupPageSize = 5;
+
   useEffect(() => {
     fetchGrammarGroups();
   }, [fetchGrammarGroups]);
@@ -280,6 +287,11 @@ export default function GrammarTab() {
       deleteGrammar(deleteTarget.id);
     } else {
       deleteGrammarGroup(deleteTarget.id);
+      const nextTotal = grammarGroups.length - 1;
+      const maxPage = Math.max(1, Math.ceil(nextTotal / groupPageSize));
+      if (groupPage > maxPage) {
+        setGroupPage(maxPage);
+      }
     }
     setDeleteTarget(null);
   };
@@ -291,6 +303,21 @@ export default function GrammarTab() {
       : filterGroup === 'none'
       ? grammars.filter((g) => !g.groupId)
       : grammars.filter((g) => g.groupId === filterGroup);
+
+  const totalAllItems = filteredGrammars.length;
+  const totalAllPages = Math.max(1, Math.ceil(totalAllItems / allPageSize));
+  const paginatedAllGrammars = filteredGrammars.slice(
+    (allPage - 1) * allPageSize,
+    allPage * allPageSize
+  );
+
+  // Group pagination
+  const totalGroupItems = grammarGroups.length;
+  const totalGroupPages = Math.max(1, Math.ceil(totalGroupItems / groupPageSize));
+  const paginatedGroups = grammarGroups.slice(
+    (groupPage - 1) * groupPageSize,
+    groupPage * groupPageSize
+  );
 
   // Ungrouped grammars
   const ungroupedGrammars = grammars.filter((g) => !g.groupId);
@@ -379,7 +406,10 @@ export default function GrammarTab() {
                 </span>
               </button>
               <button
-                onClick={() => setView('all')}
+                onClick={() => {
+                  setView('all');
+                  setAllPage(1);
+                }}
                 className={`px-3 py-1.5 text-sm rounded-md font-medium transition-all cursor-pointer ${
                   view === 'all'
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
@@ -396,7 +426,10 @@ export default function GrammarTab() {
             {view === 'all' && grammarGroups.length > 0 && (
               <select
                 value={filterGroup}
-                onChange={(e) => setFilterGroup(e.target.value)}
+                onChange={(e) => {
+                  setFilterGroup(e.target.value);
+                  setAllPage(1);
+                }}
                 className="rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer"
               >
                 <option value="all">Tất cả nhóm ({grammars.length})</option>
@@ -419,7 +452,7 @@ export default function GrammarTab() {
           {/* ── Grouped View ─────────────────────────────────────────────── */}
           {view === 'grouped' && (
             <div className="space-y-4">
-              {grammarGroups.map((group) => {
+              {paginatedGroups.map((group) => {
                 const collapsed = collapsedGroups.has(group.id);
                 return (
                   <div
@@ -533,26 +566,58 @@ export default function GrammarTab() {
                   </div>
                 </div>
               )}
+
+              {totalGroupPages > 1 && (
+                <Pagination
+                  currentPage={groupPage}
+                  totalPages={totalGroupPages}
+                  totalItems={totalGroupItems}
+                  pageSize={groupPageSize}
+                  itemLabel="nhóm ngữ pháp"
+                  theme="green"
+                  onPageChange={(p) => {
+                    setGroupPage(p);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              )}
             </div>
           )}
 
           {/* ── All / Flat View ───────────────────────────────────────────── */}
           {view === 'all' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredGrammars.length === 0 ? (
-                <div className="md:col-span-2 text-center py-16 text-slate-400">
-                  Không có ngữ pháp nào trong bộ lọc này.
-                </div>
-              ) : (
-                filteredGrammars.map((g) => (
-                  <GrammarCard
-                    key={g.id}
-                    grammar={g}
-                    onDelete={(id) =>
-                      setDeleteTarget({ type: 'grammar', id })
-                    }
-                  />
-                ))
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedAllGrammars.length === 0 ? (
+                  <div className="md:col-span-2 text-center py-16 text-slate-400">
+                    Không có ngữ pháp nào trong bộ lọc này.
+                  </div>
+                ) : (
+                  paginatedAllGrammars.map((g) => (
+                    <GrammarCard
+                      key={g.id}
+                      grammar={g}
+                      onDelete={(id) =>
+                        setDeleteTarget({ type: 'grammar', id })
+                      }
+                    />
+                  ))
+                )}
+              </div>
+
+              {totalAllItems > 0 && (
+                <Pagination
+                  currentPage={allPage}
+                  totalPages={totalAllPages}
+                  totalItems={totalAllItems}
+                  pageSize={allPageSize}
+                  itemLabel="ngữ pháp"
+                  theme="green"
+                  onPageChange={(p) => {
+                    setAllPage(p);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
               )}
             </div>
           )}

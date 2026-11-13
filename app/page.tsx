@@ -34,6 +34,7 @@ import {
   Brush,
 } from "lucide-react";
 import GrammarTab from "@/components/GrammarTab";
+import { Pagination } from "@/components/ui/pagination";
 
 type Tab = "vocabulary" | "grammar" | "kanji";
 
@@ -42,15 +43,19 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") as Tab | null;
 
-  const { lessons, deleteLesson, fetchLessons, isLoading } = useStore();
+  const { lessons, pagination, deleteLesson, fetchLessons, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam === "grammar" ? "grammar" : "vocabulary"
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 9;
 
   useEffect(() => {
-    fetchLessons();
-  }, [fetchLessons]);
+    if (activeTab === "vocabulary") {
+      fetchLessons({ type: "vocabulary", page: currentPage, limit });
+    }
+  }, [activeTab, currentPage, fetchLessons]);
 
   useEffect(() => {
     if (tabParam === "grammar") {
@@ -60,10 +65,18 @@ function HomeContent() {
     }
   }, [tabParam]);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (lessonToDelete) {
-      deleteLesson(lessonToDelete);
+      await deleteLesson(lessonToDelete);
       setLessonToDelete(null);
+      const nextTotal = (pagination?.total || 1) - 1;
+      const maxPage = Math.max(1, Math.ceil(nextTotal / limit));
+      const targetPage = currentPage > maxPage ? maxPage : currentPage;
+      if (targetPage !== currentPage) {
+        setCurrentPage(targetPage);
+      } else {
+        fetchLessons({ type: "vocabulary", page: targetPage, limit });
+      }
     }
   };
 
@@ -156,7 +169,8 @@ function HomeContent() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vocabLessons.map((lesson) => (
                 <Card
                   key={lesson.id}
@@ -241,9 +255,25 @@ function HomeContent() {
                 </Card>
               ))}
             </div>
-          )}
-        </div>
-      )}
+
+            {pagination && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.total}
+                pageSize={limit}
+                itemLabel="bài học"
+                theme="blue"
+                onPageChange={(page) => {
+                  setCurrentPage(page);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            )}
+          </>
+        )}
+      </div>
+    )}
 
       {/* Grammar Tab Content */}
       {activeTab === "grammar" && <GrammarTab />}

@@ -20,20 +20,21 @@ export default function LessonOverviewPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { lessons, fetchLessons, isLoading } = useStore();
+  const { lessons, fetchLessonById, isLoading } = useStore();
   const lesson = lessons.find((l) => l.id === id);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   useEffect(() => {
-    if (lessons.length === 0) {
-      fetchLessons();
+    if (!lesson && !hasAttemptedFetch) {
+      fetchLessonById(id).finally(() => setHasAttemptedFetch(true));
     }
-  }, [lessons.length, fetchLessons]);
+  }, [id, lesson, hasAttemptedFetch, fetchLessonById]);
 
   useEffect(() => {
-    if (lessons.length > 0 && !lesson) {
+    if (hasAttemptedFetch && !lesson && !isLoading) {
       router.push("/");
     }
-  }, [lessons, lesson, router]);
+  }, [hasAttemptedFetch, lesson, isLoading, router]);
 
   if (isLoading || !lesson) {
     return (

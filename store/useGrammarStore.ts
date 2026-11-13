@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Grammar, GrammarGroup } from "@/types";
+import { Grammar, GrammarGroup, PaginationMeta, PaginatedResponse } from "@/types";
 import { toast } from "sonner";
 import axios from "axios";
 import { api } from "@/lib/api";
@@ -11,9 +11,16 @@ const getErrorMessage = (error: unknown, fallback: string): string => {
   return error instanceof Error ? error.message : fallback;
 };
 
+export interface FetchGrammarsParams {
+  page?: number;
+  limit?: number;
+  groupId?: string;
+}
+
 interface GrammarState {
   grammars: Grammar[];
   grammarGroups: GrammarGroup[];
+  grammarPagination: PaginationMeta | null;
   isLoading: boolean;
   error: string | null;
 
@@ -24,15 +31,16 @@ interface GrammarState {
   deleteGrammarGroup: (id: string) => Promise<void>;
 
   // Grammars
-  fetchGrammars: () => Promise<void>;
+  fetchGrammars: (params?: FetchGrammarsParams) => Promise<PaginatedResponse<Grammar> | Grammar[]>;
   createGrammar: (data: Omit<Grammar, "id" | "createdAt" | "updatedAt" | "group">) => Promise<Grammar>;
   updateGrammar: (id: string, data: Partial<Omit<Grammar, "id" | "createdAt" | "updatedAt" | "group">>) => Promise<void>;
   deleteGrammar: (id: string) => Promise<void>;
 }
 
-export const useGrammarStore = create<GrammarState>((set, get) => ({
+export const useGrammarStore = create<GrammarState>((set) => ({
   grammars: [],
   grammarGroups: [],
+  grammarPagination: null,
   isLoading: false,
   error: null,
 
@@ -42,12 +50,34 @@ export const useGrammarStore = create<GrammarState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const [groupsRes, grammarsRes] = await Promise.all([
-        api.get<GrammarGroup[]>("/grammar-groups"),
-        api.get<Grammar[]>("/grammars"),
+        api.get<GrammarGroup[] | PaginatedResponse<GrammarGroup>>("/grammar-groups"),
+        api.get<Grammar[] | PaginatedResponse<Grammar>>("/grammars"),
       ]);
+
+      const groups = Array.isArray(groupsRes.data)
+        ? groupsRes.data
+        : (groupsRes.data as PaginatedResponse<GrammarGroup>).data;
+
+      const grammars = Array.isArray(grammarsRes.data)
+        ? grammarsRes.data
+        : (grammarsRes.data as PaginatedResponse<Grammar>).data;
+
       set({
-        grammarGroups: groupsRes.data,
-        grammars: grammarsRes.data,
+        grammarGroups: groups,
+        grammars: grammars,
+        grammarPagination: !Array.isArray(grammarsRes.data)
+          ? {
+              page: grammarsRes.data.page,
+              limit: grammarsRes.data.limit,
+              total: grammarsRes.data.total,
+              totalPages: grammarsRes.data.totalPages,
+            }
+          : {
+              page: 1,
+              limit: grammars.length,
+              total: grammars.length,
+              totalPages: 1,
+            },
         isLoading: false,
       });
     } catch (error) {
@@ -106,12 +136,38 @@ export const useGrammarStore = create<GrammarState>((set, get) => ({
 
   // ─── Grammars ─────────────────────────────────────────────────────────────
 
-  fetchGrammars: async () => {
+  fetchGrammars: async (params?: FetchGrammarsParams) => {
     try {
-      const res = await api.get<Grammar[]>("/grammars");
-      set({ grammars: res.data });
+      const res = await api.get<PaginatedResponse<Grammar> | Grammar[]>("/grammars", {
+        params,
+      });
+      const data = res.data;
+      if (Array.isArray(data)) {
+        set({
+          grammars: data,
+          grammarPagination: {
+            page: 1,
+            limit: data.length,
+            total: data.length,
+            totalPages: 1,
+          },
+        });
+        return data;
+      } else {
+        set({
+          grammars: data.data,
+          grammarPagination: {
+            page: data.page,
+            limit: data.limit,
+            total: data.total,
+            totalPages: data.totalPages,
+          },
+        });
+        return data;
+      }
     } catch (error) {
       toast.error(getErrorMessage(error, "Không thể tải danh sách ngữ pháp"));
+      throw error;
     }
   },
 
