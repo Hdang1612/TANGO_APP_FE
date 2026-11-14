@@ -32,9 +32,11 @@ import {
   Languages,
   BookMarked,
   Brush,
+  Sparkles,
 } from "lucide-react";
 import GrammarTab from "@/components/GrammarTab";
 import { Pagination } from "@/components/ui/pagination";
+import TestConfigDialog from "@/components/TestConfigDialog";
 
 type Tab = "vocabulary" | "grammar" | "kanji";
 
@@ -45,6 +47,7 @@ function HomeContent() {
 
   const { lessons, pagination, deleteLesson, fetchLessons, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam === "grammar" ? "grammar" : "vocabulary"
   );
@@ -142,12 +145,22 @@ function HomeContent() {
                 Quản lý danh sách từ vựng và bắt đầu học.
               </p>
             </div>
-            <Link href="/lessons/create">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg hover:shadow-blue-600/25 transition-all">
-                <PlusCircle className="w-5 h-5" />
-                Tạo bài học mới
+            <div className="flex gap-2.5 flex-wrap">
+              <Button
+                onClick={() => setTestDialogOpen(true)}
+                variant="outline"
+                className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 dark:border-blue-900 dark:text-blue-400 cursor-pointer shadow-sm"
+              >
+                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                Làm bài test
               </Button>
-            </Link>
+              <Link href="/lessons/create">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg hover:shadow-blue-600/25 transition-all cursor-pointer">
+                  <PlusCircle className="w-5 h-5" />
+                  Tạo bài học mới
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {isLoading ? (
@@ -304,6 +317,12 @@ function HomeContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TestConfigDialog
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+        type="vocabulary"
+      />
     </div>
   );
 }

@@ -32,8 +32,10 @@ import {
   BookMarked,
   Edit2,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
+import TestConfigDialog from "@/components/TestConfigDialog";
 
 type Tab = "vocabulary" | "grammar" | "kanji";
 
@@ -41,6 +43,7 @@ export default function KanjiLessonsPage() {
   const router = useRouter();
   const { lessons, pagination, fetchLessons, deleteLesson, isLoading } = useStore();
   const [lessonToDelete, setLessonToDelete] = useState<string | null>(null);
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 9;
   const activeTab: Tab = "kanji";
@@ -123,12 +126,22 @@ export default function KanjiLessonsPage() {
             Học chữ Hán, âm On, âm Kun, nghĩa Hán Việt và ví dụ từ vựng.
           </p>
         </div>
-        <Link href="/kanji-lessons/create">
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white gap-2 shadow-lg hover:shadow-purple-600/25 transition-all cursor-pointer">
-            <PlusCircle className="w-5 h-5" />
-            Tạo bài học mới
+        <div className="flex gap-2.5 flex-wrap">
+          <Button
+            onClick={() => setTestDialogOpen(true)}
+            variant="outline"
+            className="gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 dark:border-purple-900 dark:text-purple-400 cursor-pointer shadow-sm"
+          >
+            <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            Làm bài test
           </Button>
-        </Link>
+          <Link href="/kanji-lessons/create">
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white gap-2 shadow-lg hover:shadow-purple-600/25 transition-all cursor-pointer">
+              <PlusCircle className="w-5 h-5" />
+              Tạo bài học mới
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Content */}
@@ -300,6 +313,12 @@ export default function KanjiLessonsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TestConfigDialog
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+        type="kanji"
+      />
     </div>
   );
 }

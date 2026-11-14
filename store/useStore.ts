@@ -17,6 +17,8 @@ interface AppState {
   error: string | null;
   fetchLessons: (params?: FetchLessonsParams) => Promise<PaginatedResponse<Lesson> | Lesson[]>;
   fetchLessonById: (id: string) => Promise<Lesson | null>;
+  fetchTestVocabularies: (limit?: number) => Promise<Vocabulary[]>;
+  fetchTestKanjis: (limit?: number) => Promise<Kanji[]>;
   addLesson: (lesson: Lesson) => Promise<void>;
   updateLesson: (
     id: string, 
@@ -173,6 +175,34 @@ export const useStore = create<AppState>((set) => ({
       const errorMessage = getErrorMessage(error, "Failed to delete lesson");
       console.error(error);
       toast.error(errorMessage);
+    }
+  },
+
+  fetchTestVocabularies: async (limit = 20) => {
+    try {
+      const response = await api.get<Vocabulary[]>("/lessons/test-vocabularies", {
+        params: { limit },
+        skipLoading: true,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, "Failed to fetch test vocabularies");
+      toast.error(errorMessage);
+      throw error;
+    }
+  },
+
+  fetchTestKanjis: async (limit = 20) => {
+    try {
+      const response = await api.get<Kanji[]>("/kanjis/test-kanjis", {
+        params: { limit },
+        skipLoading: true,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, "Failed to fetch test kanjis");
+      toast.error(errorMessage);
+      throw error;
     }
   },
 }));
