@@ -62,7 +62,11 @@ function GrammarCard({
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2">
+            <p
+              className={`text-sm text-slate-600 dark:text-slate-400 mt-1.5 ${
+                expanded ? 'line-clamp-none whitespace-pre-wrap' : 'line-clamp-2'
+              }`}
+            >
               {grammar.usage}
             </p>
           </div>
